@@ -1,0 +1,20 @@
+---
+# Instalación de redis
+- name: instalar redis
+  yum: name=redis state=latest
+  notify: iniciar redis
+
+- name: habilitar redis en el arranque del sistema
+  service: name=redis enabled=yes
+
+- name: configurar redis para que permita conexiones externas
+  replace: dest=/etc/redis.conf regexp='^bind 127.0.0.1' replace='#bind 127.0.0.1'
+  notify: reiniciar redis
+  when: redis_conexiones_remotas is defined and redis_conexiones_remotas
+
+- name: ajustes de memoria
+  sysctl: name={{ item.name }} value={{ item.value }} state=present reload=yes
+  notify: reiniciar redis
+  with_items:
+    - name: vm.overcommit_memory
+      value: 1
